@@ -1,10 +1,8 @@
-// Thin re-export of the Vercel Postgres client. `sql` is a tagged-template
-// that parameterises inputs (no string concatenation → no SQL injection).
-//
-// It connects using the POSTGRES_URL env var, which works both on Vercel
-// (auto-injected by an attached Postgres/Neon store) and locally (point it at
-// any Postgres instance — see .env.example).
-export { sql } from "@vercel/postgres";
+import postgres from "postgres";
+
+const client = postgres(process.env.POSTGRES_URL!);
+
+export const sql = client;
 
 export type Card = {
   id: string;
