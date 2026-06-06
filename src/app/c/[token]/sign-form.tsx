@@ -3,9 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// Client form: posts a username (+ optional message) to the card's timeline,
-// then refreshes the server component to show the new entry.
-export function SignForm({ token }: { token: string }) {
+export function SignForm({
+  token,
+  accent,
+  accentDark,
+}: {
+  token: string;
+  accent: string;
+  accentDark: string;
+}) {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
@@ -24,7 +30,9 @@ export function SignForm({ token }: { token: string }) {
       });
       if (!res.ok) {
         setError(
-          res.status === 422 ? "Please enter a name (1–40 chars)." : "Something went wrong.",
+          res.status === 422
+            ? "Please enter a name (1–40 chars)."
+            : "Something went wrong.",
         );
         return;
       }
@@ -36,48 +44,120 @@ export function SignForm({ token }: { token: string }) {
     }
   }
 
-  const field: React.CSSProperties = {
+  const inputBase: React.CSSProperties = {
     width: "100%",
-    padding: ".6rem .7rem",
-    border: "1px solid #d9cfc1",
-    borderRadius: 8,
+    padding: ".55rem 0 .65rem",
+    border: "none",
+    borderBottom: "1.5px solid #d9cfc1",
+    background: "transparent",
     fontSize: "1rem",
-    boxSizing: "border-box",
+    color: "#2d2318",
+    fontFamily: "inherit",
   };
 
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: ".6rem", marginTop: "1.25rem" }}>
-      <input
-        style={field}
-        placeholder="Your name"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        maxLength={40}
-        required
-      />
-      <textarea
-        style={{ ...field, minHeight: 64, resize: "vertical" }}
-        placeholder="A note of thanks (optional)"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        maxLength={280}
-      />
-      {error && <span style={{ color: "#b4452f", fontSize: ".85rem" }}>{error}</span>}
+    <form
+      onSubmit={submit}
+      style={{
+        display: "grid",
+        gap: "1.4rem",
+        background: "#fffcf7",
+        borderRadius: 16,
+        padding: "1.75rem 1.6rem 1.5rem",
+        border: "1px solid #e8ddd0",
+        borderTop: `4px solid ${accent}`,
+        boxShadow: "0 6px 28px rgba(45, 35, 24, .08)",
+      }}
+    >
+      <div>
+        <label
+          style={{
+            display: "block",
+            fontSize: ".68rem",
+            letterSpacing: ".18em",
+            textTransform: "uppercase",
+            color: "#b09880",
+            marginBottom: ".5rem",
+          }}
+        >
+          Your name
+        </label>
+        <input
+          className="sign-input"
+          style={inputBase}
+          placeholder="How would you like to be remembered here?"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          maxLength={40}
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          style={{
+            display: "block",
+            fontSize: ".68rem",
+            letterSpacing: ".18em",
+            textTransform: "uppercase",
+            color: "#b09880",
+            marginBottom: ".5rem",
+          }}
+        >
+          A note of gratitude{" "}
+          <span
+            style={{
+              textTransform: "none",
+              letterSpacing: 0,
+              fontSize: ".78rem",
+              color: "#c8b9a8",
+            }}
+          >
+            (optional)
+          </span>
+        </label>
+        <textarea
+          className="sign-textarea"
+          style={{
+            ...inputBase,
+            minHeight: 80,
+            resize: "vertical",
+            lineHeight: 1.65,
+            fontSize: ".95rem",
+          }}
+          placeholder="Share a moment, a feeling, or simply a thank you…"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          maxLength={280}
+        />
+      </div>
+
+      {error && (
+        <span style={{ color: "#b4452f", fontSize: ".82rem", marginTop: "-.5rem" }}>
+          {error}
+        </span>
+      )}
+
       <button
         type="submit"
         disabled={busy}
+        className="pass-btn"
         style={{
-          padding: ".65rem",
+          padding: ".85rem",
           border: "none",
-          borderRadius: 8,
-          background: "#1c1a17",
+          borderRadius: 10,
+          background: `linear-gradient(135deg, ${accent} 0%, ${accentDark} 100%)`,
           color: "#fff",
-          fontSize: "1rem",
+          fontSize: ".95rem",
+          fontWeight: 600,
+          letterSpacing: ".05em",
           cursor: busy ? "default" : "pointer",
-          opacity: busy ? 0.6 : 1,
+          opacity: busy ? 0.65 : 1,
+          fontFamily: "inherit",
+          boxShadow: "0 3px 10px rgba(122, 79, 46, .2)",
         }}
       >
-        {busy ? "Adding…" : "Add me to the timeline"}
+        {busy ? "Passing it forward…" : "Pass it forward  ✦"}
       </button>
     </form>
   );

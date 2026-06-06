@@ -1,4 +1,18 @@
 import type { ReactNode } from "react";
+import { Playfair_Display, Lora } from "next/font/google";
+import "./globals.css";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata = {
   title: "Gratitude Token",
@@ -7,17 +21,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body
-        style={{
-          margin: 0,
-          fontFamily: "system-ui, -apple-system, sans-serif",
-          background: "#faf7f2",
-          color: "#1c1a17",
-        }}
-      >
-        {children}
-      </body>
+    <html lang="en" className={`${playfair.variable} ${lora.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
