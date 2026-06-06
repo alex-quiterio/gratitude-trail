@@ -2,7 +2,7 @@
 -- Apply after migrations: psql "$POSTGRES_URL" -f db/seed.sql
 
 insert into cards (qr_token, title)
-values ('demo-card-001', 'Demo gratitude token')
+values ('gratitude-token-2026-06', 'Gratitude token')
 on conflict (qr_token) do nothing;
 
 insert into entries (card_id, username, message, created_at)
