@@ -1,5 +1,8 @@
 # Gratitude Trail
 
+<img width="1536" height="1024" alt="gratitude-tokens" src="https://github.com/user-attachments/assets/7039b93c-d38a-44b4-bf9e-70ff7814d34f" />
+
+
 A small experiment in physical gratitude. A printed card carries a QR code.
 When someone scans it, they land on a page that shows every person who has held
 that card before them — and they can leave their own name, and a note.
