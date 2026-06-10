@@ -104,7 +104,7 @@ export function SignForm({
             marginBottom: ".5rem",
           }}
         >
-          A note of gratitude{" "}
+          Why are you grateful for? {" "}
           <span
             style={{
               textTransform: "none",
