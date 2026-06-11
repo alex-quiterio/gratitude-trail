@@ -128,7 +128,7 @@ export function SignForm({
           placeholder="Share a moment, a feeling, or simply a thank you…"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          maxLength={280}
+          maxLength={10000}
         />
       </div>
 
