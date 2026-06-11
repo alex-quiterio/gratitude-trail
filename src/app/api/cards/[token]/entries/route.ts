@@ -39,7 +39,6 @@ export async function POST(
     const entry = await addEntry(card.id, username, message);
     return NextResponse.json({ entry }, { status: 201 });
   } catch {
-    // CHECK constraint violations etc. land here.
-    return NextResponse.json({ error: "rejected" }, { status: 422 });
+    return NextResponse.json({ error: "invalid_message" }, { status: 422 });
   }
 }

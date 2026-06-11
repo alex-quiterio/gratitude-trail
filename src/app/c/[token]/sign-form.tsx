@@ -29,11 +29,16 @@ export function SignForm({
         body: JSON.stringify({ username, message: message || null }),
       });
       if (!res.ok) {
-        setError(
-          res.status === 422
-            ? "Please enter a name (1–40 chars)."
-            : "Something went wrong.",
-        );
+        if (res.status === 422) {
+          const body = await res.json().catch(() => ({}));
+          setError(
+            body.error === "invalid_message"
+              ? "Your note is too long (max 10 000 characters)."
+              : "Please enter a name (1–40 chars).",
+          );
+        } else {
+          setError("Something went wrong.");
+        }
         return;
       }
       setUsername("");
@@ -104,7 +109,7 @@ export function SignForm({
             marginBottom: ".5rem",
           }}
         >
-          Why are you grateful for? {" "}
+          A note of gratitude{" "}
           <span
             style={{
               textTransform: "none",

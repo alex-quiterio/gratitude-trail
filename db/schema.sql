@@ -38,7 +38,7 @@ create table if not exists entries (
     message     text,                                  -- optional note from the holder
     created_at  timestamptz not null default now(),
     constraint username_len check (char_length(btrim(username)) between 1 and 40),
-    constraint message_len  check (message is null or char_length(message) <= 280)
+    constraint message_len  check (message is null or char_length(message) <= 10000)
 );
 
 -- Primary access pattern: fetch a card's timeline in chronological order.
