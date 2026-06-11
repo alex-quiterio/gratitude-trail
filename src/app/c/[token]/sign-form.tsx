@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function SignForm({
@@ -17,6 +17,13 @@ export function SignForm({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const storageKey = `gt_signed_${token}`;
+
+  useEffect(() => {
+    if (localStorage.getItem(storageKey)) setSubmitted(true);
+  }, [storageKey]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,12 +48,36 @@ export function SignForm({
         }
         return;
       }
-      setUsername("");
-      setMessage("");
+      localStorage.setItem(storageKey, "1");
+      setSubmitted(true);
       router.refresh();
     } finally {
       setBusy(false);
     }
+  }
+
+  if (submitted) {
+    return (
+      <div
+        style={{
+          background: "#fffcf7",
+          borderRadius: 16,
+          padding: "1.75rem 1.6rem 1.5rem",
+          border: "1px solid #e8ddd0",
+          borderTop: `4px solid ${accent}`,
+          boxShadow: "0 6px 28px rgba(45, 35, 24, .08)",
+          textAlign: "center",
+          color: "#7a6555",
+          fontSize: ".95rem",
+          lineHeight: 1.65,
+        }}
+      >
+        <p style={{ margin: 0, fontSize: "1.35rem" }}>✦</p>
+        <p style={{ margin: ".6rem 0 0" }}>
+          You&rsquo;ve already passed it forward. Thank you for being here ✨
+        </p>
+      </div>
+    );
   }
 
   const inputBase: React.CSSProperties = {
