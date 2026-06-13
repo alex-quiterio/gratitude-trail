@@ -1,4 +1,7 @@
+import { GRATITUDE_QUOTES } from "@/lib/quotes";
+
 export default function Home() {
+  const quote = GRATITUDE_QUOTES[Math.floor(Math.random() * GRATITUDE_QUOTES.length)];
   return (
     <main
       style={{
@@ -68,13 +71,50 @@ export default function Home() {
           color: "#7a6555",
           fontSize: "1rem",
           lineHeight: 1.8,
-          margin: 0,
+          margin: "0 0 2rem",
         }}
       >
         Every token carries a story. It passes from hand to hand, gathering
         names and moments along the way. Scan the QR code to read its journey —
         and leave a little piece of yours behind.
       </p>
+
+      <blockquote
+        style={{
+          margin: "0 auto",
+          padding: "1.2rem 1.5rem",
+          background: "#fff4e8",
+          borderLeft: "3px solid #c4864a",
+          borderRadius: "0 12px 12px 0",
+          textAlign: "left",
+          maxWidth: 420,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-heading), Georgia, serif",
+            fontSize: "1.05rem",
+            fontStyle: "italic",
+            color: "#2d2318",
+            lineHeight: 1.65,
+            margin: "0 0 .5rem",
+          }}
+        >
+          &ldquo;{quote.text}&rdquo;
+        </p>
+        <cite
+          style={{
+            fontSize: ".72rem",
+            letterSpacing: ".12em",
+            textTransform: "uppercase",
+            color: "#c4864a",
+            fontStyle: "normal",
+            fontWeight: 600,
+          }}
+        >
+          — {quote.author}
+        </cite>
+      </blockquote>
     </main>
   );
 }
