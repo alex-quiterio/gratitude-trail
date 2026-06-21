@@ -3,6 +3,35 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type NotifState = "idle" | "requesting" | "subscribed" | "denied" | "unsupported";
+
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr.buffer as ArrayBuffer;
+}
+
+async function subscribeToCard(token: string): Promise<boolean> {
+  const reg = await navigator.serviceWorker.ready;
+  const vapidKey = urlBase64ToArrayBuffer(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!);
+
+  const existing = await reg.pushManager.getSubscription();
+  const sub = existing ?? await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: vapidKey,
+  });
+
+  const res = await fetch(`/api/cards/${token}/subscribe`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ subscription: sub.toJSON() }),
+  });
+  return res.ok;
+}
+
 export function SignForm({
   token,
   accent,
@@ -18,6 +47,7 @@ export function SignForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [notifState, setNotifState] = useState<NotifState>("idle");
 
   const storageKey = `gt_signed_${token}`;
 
@@ -56,7 +86,34 @@ export function SignForm({
     }
   }
 
+  async function handleSubscribe() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setNotifState("unsupported");
+      return;
+    }
+    setNotifState("requesting");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      setNotifState("denied");
+      return;
+    }
+    try {
+      const ok = await subscribeToCard(token);
+      setNotifState(ok ? "subscribed" : "idle");
+    } catch {
+      setNotifState("idle");
+    }
+  }
+
   if (submitted) {
+    const notifLabel: Record<NotifState, string> = {
+      idle: "Notify me when someone else signs this ✦",
+      requesting: "Requesting permission…",
+      subscribed: "You'll be notified next time ✨",
+      denied: "Notifications blocked in browser settings",
+      unsupported: "Notifications not supported on this device",
+    };
+
     return (
       <div
         style={{
@@ -76,6 +133,35 @@ export function SignForm({
         <p style={{ margin: ".6rem 0 0" }}>
           You&rsquo;ve already passed it forward. Thank you for being here ✨
         </p>
+
+        {notifState !== "subscribed" && notifState !== "unsupported" && (
+          <button
+            onClick={handleSubscribe}
+            disabled={notifState === "requesting" || notifState === "denied"}
+            style={{
+              marginTop: "1.2rem",
+              padding: ".55rem 1.1rem",
+              border: `1.5px solid ${accent}`,
+              borderRadius: 8,
+              background: "transparent",
+              color: accentDark,
+              fontSize: ".82rem",
+              fontWeight: 600,
+              letterSpacing: ".04em",
+              cursor: notifState === "requesting" || notifState === "denied" ? "default" : "pointer",
+              opacity: notifState === "denied" ? 0.5 : 1,
+              fontFamily: "inherit",
+            }}
+          >
+            {notifLabel[notifState]}
+          </button>
+        )}
+
+        {(notifState === "subscribed" || notifState === "unsupported") && (
+          <p style={{ margin: ".8rem 0 0", fontSize: ".82rem", color: "#b09880" }}>
+            {notifLabel[notifState]}
+          </p>
+        )}
       </div>
     );
   }
