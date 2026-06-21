@@ -1,4 +1,5 @@
 import { GRATITUDE_QUOTES } from "@/lib/quotes";
+import { SignedCards } from "./signed-cards";
 
 export default function Home() {
   const quote = GRATITUDE_QUOTES[Math.floor(Math.random() * GRATITUDE_QUOTES.length)];
@@ -115,6 +116,8 @@ export default function Home() {
           — {quote.author}
         </cite>
       </blockquote>
+
+      <SignedCards />
     </main>
   );
 }
