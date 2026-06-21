@@ -1,0 +1,12 @@
+{
+  "name": "Gratitude Token",
+  "short_name": "Gratitude",
+  "description": "Scan a gratitude token card and add yourself to its timeline.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffcf7",
+  "theme_color": "#c4864a",
+  "icons": [
+    { "src": "/icon.png", "sizes": "any", "type": "image/png" }
+  ]
+}

@@ -20,7 +20,13 @@ const lora = Lora({
 export const metadata = {
   title: "Gratitude Token",
   description: "Scan a gratitude token card and add yourself to its timeline.",
-  icons: { icon: "/icon.png" },
+  icons: { icon: "/icon.png", apple: "/icon.png" },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Gratitude Token",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
