@@ -1,0 +1,1910 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>QR Code Generator</title>
+        <style>
+            :root {
+                --bg: #f5f0e8;
+                --surface: #fffdf7;
+                --ink: #1a1a18;
+                --ink-light: #6b6860;
+                --accent: #e8553d;
+                --accent-hover: #d14a34;
+                --border: #e0d9cc;
+                --shadow: rgba(26, 26, 24, 0.06);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background: var(--bg);
+                color: var(--ink);
+                font-family: "Georgia", "Times New Roman", serif;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 48px 24px 80px;
+            }
+
+            header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            header h1 {
+                font-size: 2.2rem;
+                font-weight: 400;
+                letter-spacing: -0.02em;
+                margin-bottom: 6px;
+            }
+
+            header p {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.85rem;
+                color: var(--ink-light);
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+            }
+
+            .card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                box-shadow:
+                    0 2px 12px var(--shadow),
+                    0 1px 3px var(--shadow);
+                width: 100%;
+                max-width: 680px;
+                padding: 36px;
+            }
+
+            .mode-toggle {
+                display: flex;
+                gap: 0;
+                margin-bottom: 24px;
+                border: 1.5px solid var(--border);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .mode-toggle button {
+                flex: 1;
+                padding: 10px 16px;
+                border: none;
+                background: var(--bg);
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.8rem;
+                font-weight: 600;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: var(--ink-light);
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .mode-toggle button.active {
+                background: var(--accent);
+                color: white;
+            }
+
+            .mode-toggle button:not(:last-child) {
+                border-right: 1.5px solid var(--border);
+            }
+
+            .input-group {
+                margin-bottom: 24px;
+            }
+
+            .input-group label {
+                display: block;
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.7rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--ink-light);
+                margin-bottom: 8px;
+            }
+
+            .input-group textarea {
+                width: 100%;
+                min-height: 80px;
+                padding: 14px 16px;
+                border: 1.5px solid var(--border);
+                border-radius: 8px;
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.95rem;
+                color: var(--ink);
+                background: var(--bg);
+                resize: vertical;
+                transition: border-color 0.2s;
+                outline: none;
+            }
+
+            .input-group textarea:focus {
+                border-color: var(--accent);
+            }
+
+            .input-group textarea::placeholder {
+                color: #b5afa3;
+            }
+
+            .input-group textarea.batch-input {
+                min-height: 180px;
+                font-size: 0.82rem;
+                font-family: "SF Mono", "Menlo", "Monaco", monospace;
+                line-height: 1.6;
+            }
+
+            .format-hint {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.72rem;
+                color: var(--ink-light);
+                margin-top: 6px;
+                line-height: 1.5;
+            }
+
+            .format-hint code {
+                background: var(--bg);
+                padding: 1px 5px;
+                border-radius: 3px;
+                font-size: 0.7rem;
+            }
+
+            .options-row {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 28px;
+            }
+
+            .option {
+                flex: 1;
+            }
+
+            .option label {
+                display: block;
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.7rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--ink-light);
+                margin-bottom: 8px;
+            }
+
+            .option select {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1.5px solid var(--border);
+                border-radius: 8px;
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.85rem;
+                color: var(--ink);
+                background: var(--bg);
+                cursor: pointer;
+                outline: none;
+                transition: border-color 0.2s;
+                appearance: none;
+                -webkit-appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B6860'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                padding-right: 32px;
+            }
+
+            .option select:focus {
+                border-color: var(--accent);
+            }
+
+            .color-pair {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .color-swatch {
+                width: 38px;
+                height: 38px;
+                border: 1.5px solid var(--border);
+                border-radius: 8px;
+                cursor: pointer;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .color-swatch input[type="color"] {
+                position: absolute;
+                top: -4px;
+                left: -4px;
+                width: calc(100% + 8px);
+                height: calc(100% + 8px);
+                border: none;
+                padding: 0;
+                cursor: pointer;
+            }
+
+            .color-label {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.75rem;
+                color: var(--ink);
+                background: var(--bg);
+                border: 1.5px solid var(--border);
+                border-radius: 6px;
+                padding: 6px 8px;
+                width: 80px;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+
+            .color-label:focus {
+                border-color: var(--accent);
+            }
+
+            /* Single mode */
+            .qr-canvas-wrap {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 0 auto 28px;
+                padding: 28px;
+                border: 2px dashed var(--border);
+                border-radius: 8px;
+                background: white;
+                min-height: 200px;
+                transition: border-color 0.3s;
+                position: relative;
+            }
+
+            .qr-canvas-wrap.has-qr {
+                border-color: transparent;
+                border-style: solid;
+            }
+
+            .qr-placeholder {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.85rem;
+                color: #c5bfb3;
+                text-align: center;
+                line-height: 1.6;
+            }
+
+            canvas.qr-canvas {
+                image-rendering: pixelated;
+            }
+
+            .char-count {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.72rem;
+                color: var(--ink-light);
+                text-align: right;
+                margin-top: 6px;
+            }
+
+            .char-count.warn {
+                color: var(--accent);
+            }
+
+            .actions {
+                display: flex;
+                gap: 12px;
+            }
+
+            .btn {
+                flex: 1;
+                padding: 14px 20px;
+                border: none;
+                border-radius: 8px;
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.85rem;
+                font-weight: 600;
+                letter-spacing: 0.02em;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .btn-primary {
+                background: var(--accent);
+                color: white;
+            }
+
+            .btn-primary:hover {
+                background: var(--accent-hover);
+                transform: translateY(-1px);
+            }
+            .btn-primary:active {
+                transform: translateY(0);
+            }
+
+            .btn-secondary {
+                background: var(--bg);
+                color: var(--ink);
+                border: 1.5px solid var(--border);
+            }
+
+            .btn-secondary:hover {
+                background: #ede8dd;
+            }
+            .btn-secondary:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .error-msg {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.8rem;
+                color: var(--accent);
+                margin-bottom: 16px;
+                display: none;
+            }
+
+            .error-msg.show {
+                display: block;
+            }
+
+            /* Batch results grid */
+            .batch-results {
+                margin-top: 32px;
+                display: none;
+            }
+
+            .batch-results.show {
+                display: block;
+            }
+
+            .batch-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 1.5px solid var(--border);
+            }
+
+            .batch-header h2 {
+                font-size: 1.1rem;
+                font-weight: 400;
+            }
+
+            .batch-count {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.75rem;
+                color: var(--ink-light);
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .qr-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px;
+            }
+
+            .qr-card {
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 14px;
+                transition: box-shadow 0.2s;
+            }
+
+            .qr-card:hover {
+                box-shadow: 0 4px 16px var(--shadow);
+            }
+
+            .qr-card canvas {
+                image-rendering: pixelated;
+            }
+
+            .qr-card-title {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.78rem;
+                font-weight: 600;
+                color: var(--ink);
+                text-align: center;
+                line-height: 1.4;
+                word-break: break-word;
+            }
+
+            .qr-card-url {
+                font-family: "SF Mono", "Menlo", monospace;
+                font-size: 0.65rem;
+                color: var(--ink-light);
+                text-align: center;
+                word-break: break-all;
+                line-height: 1.3;
+                max-height: 2.6em;
+                overflow: hidden;
+            }
+
+            .qr-card .btn-dl {
+                width: 100%;
+                padding: 8px 12px;
+                border: 1.5px solid var(--border);
+                border-radius: 6px;
+                background: var(--bg);
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: var(--ink);
+                cursor: pointer;
+                transition: all 0.2s;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            .qr-card .btn-dl:hover {
+                background: #ede8dd;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .save-modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(26, 26, 24, 0.6);
+                z-index: 1000;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+            }
+
+            .save-modal-overlay.show {
+                display: flex;
+            }
+
+            .save-modal {
+                background: var(--surface);
+                border-radius: 14px;
+                padding: 32px;
+                max-width: 440px;
+                width: 100%;
+                text-align: center;
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+                position: relative;
+            }
+
+            .save-modal-close {
+                position: absolute;
+                top: 12px;
+                right: 16px;
+                background: none;
+                border: none;
+                font-size: 1.4rem;
+                color: var(--ink-light);
+                cursor: pointer;
+                line-height: 1;
+                padding: 4px;
+            }
+
+            .save-modal-close:hover {
+                color: var(--ink);
+            }
+
+            .save-modal h3 {
+                font-size: 1rem;
+                font-weight: 400;
+                margin-bottom: 6px;
+            }
+
+            .save-modal .save-hint {
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 0.78rem;
+                color: var(--ink-light);
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .save-modal img {
+                max-width: 320px;
+                width: 100%;
+                image-rendering: pixelated;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: white;
+            }
+
+            .save-modal .save-filename {
+                font-family: "SF Mono", "Menlo", monospace;
+                font-size: 0.7rem;
+                color: var(--ink-light);
+                margin-top: 12px;
+            }
+
+            @media print {
+                title {
+                    display: none important!;
+                    font-size: 1px;
+                }
+                body {
+                    background: white;
+                    padding: 20px;
+                }
+                .card {
+                    box-shadow: none;
+                    border: none;
+                    padding: 0;
+                    max-width: 100%;
+                }
+                .input-group,
+                .options-row,
+                .actions,
+                header p,
+                .char-count,
+                .error-msg,
+                .mode-toggle,
+                .format-hint,
+                .btn-dl {
+                    display: none !important;
+                }
+                .qr-canvas-wrap {
+                    border: none;
+                    padding: 0;
+                }
+                header h1 {
+                    font-size: 1.4rem;
+                    margin-bottom: 20px;
+                }
+                .batch-results {
+                    display: block !important;
+                }
+                .qr-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 16px;
+                }
+                .qr-card {
+                    break-inside: avoid;
+                    box-shadow: none;
+                    border: 1px solid #ddd;
+                }
+                .batch-header {
+                    border-bottom-color: #ddd;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>QR Code Generator</h1>
+            <p>Single or batch &middot; Download as PNG</p>
+        </header>
+
+        <div class="card">
+            <div class="mode-toggle">
+                <button id="mode-single" class="active">Single</button>
+                <button id="mode-batch">Batch (CSV)</button>
+            </div>
+
+            <!-- Single mode input -->
+            <div class="input-group" id="single-input-group">
+                <label for="qr-input">Content</label>
+                <textarea
+                    id="qr-input"
+                    placeholder="Paste a URL or type any text…"
+                    spellcheck="false"
+                ></textarea>
+                <div class="char-count" id="char-count">0 / 2,953</div>
+            </div>
+
+            <!-- Batch mode input -->
+            <div class="input-group hidden" id="batch-input-group">
+                <label for="batch-input">CSV Data</label>
+                <textarea
+                    id="batch-input"
+                    class="batch-input"
+                    placeholder="URL;Title&#10;https://example.com/page-1;My First Page&#10;https://example.com/page-2;My Second Page"
+                    spellcheck="false"
+                ></textarea>
+                <div class="format-hint">
+                    Format: <code>URL;Title</code> &mdash; one per line. First
+                    line can be a header row and will be skipped.
+                </div>
+            </div>
+
+            <div class="options-row">
+                <div class="option">
+                    <label>Error Correction</label>
+                    <select id="ec-level">
+                        <option value="L">Low (7%)</option>
+                        <option value="M" selected>Medium (15%)</option>
+                        <option value="Q">Quartile (25%)</option>
+                        <option value="H">High (30%)</option>
+                    </select>
+                </div>
+                <div class="option">
+                    <label>Module Size</label>
+                    <select id="mod-size">
+                        <option value="6">Small</option>
+                        <option value="10" selected>Medium</option>
+                        <option value="16">Large</option>
+                        <option value="24">X-Large</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="options-row">
+                <div class="option">
+                    <label>Foreground</label>
+                    <div class="color-pair">
+                        <div class="color-swatch">
+                            <input type="color" id="fg-color" value="#E53C43" />
+                        </div>
+                        <input
+                            type="text"
+                            class="color-label"
+                            id="fg-label"
+                            value="#E53C43"
+                            maxlength="7"
+                            spellcheck="false"
+                        />
+                    </div>
+                </div>
+                <div class="option">
+                    <label>Background</label>
+                    <div class="color-pair">
+                        <div class="color-swatch">
+                            <input type="color" id="bg-color" value="#FFFFFF" />
+                        </div>
+                        <input
+                            type="text"
+                            class="color-label"
+                            id="bg-label"
+                            value="#FFFFFF"
+                            maxlength="7"
+                            spellcheck="false"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div class="error-msg" id="error-msg"></div>
+
+            <!-- Single mode output -->
+            <div id="single-output">
+                <div class="qr-canvas-wrap" id="qr-wrap">
+                    <div class="qr-placeholder" id="qr-placeholder">
+                        Your QR code will<br />appear here
+                    </div>
+                    <canvas
+                        class="qr-canvas"
+                        id="qr-canvas"
+                        style="display: none"
+                    ></canvas>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" id="generate-btn">
+                    Generate
+                </button>
+                <button class="btn btn-secondary" id="download-btn" disabled>
+                    Download PNG
+                </button>
+            </div>
+
+            <!-- Batch mode output -->
+            <div class="batch-results" id="batch-results">
+                <div class="batch-header">
+                    <h2>Generated Codes</h2>
+                    <span class="batch-count" id="batch-count"></span>
+                </div>
+                <div class="qr-grid" id="qr-grid"></div>
+            </div>
+        </div>
+
+        <div class="save-modal-overlay" id="save-modal">
+            <div class="save-modal">
+                <button class="save-modal-close" id="save-modal-close">
+                    &times;
+                </button>
+                <h3>Save Your QR Code</h3>
+                <div class="save-hint">
+                    Right-click (or long-press on mobile) the image below and
+                    choose <strong>Save Image As</strong>
+                </div>
+                <a id="save-modal-link" download="qrcode.png"
+                    ><img id="save-modal-img" src="" alt="QR Code"
+                /></a>
+                <div class="save-filename" id="save-modal-filename"></div>
+            </div>
+        </div>
+
+        <script>
+            // ─── QR Code Engine ───────────────────────────────────────────────
+            const QR = (() => {
+                const EC_LEVELS = { L: 0, M: 1, Q: 2, H: 3 };
+
+                const CAPACITY = [
+                    null,
+                    [17, 14, 11, 7],
+                    [32, 26, 20, 14],
+                    [53, 42, 32, 24],
+                    [78, 62, 46, 34],
+                    [106, 84, 60, 44],
+                    [134, 106, 74, 58],
+                    [154, 122, 86, 64],
+                    [192, 152, 108, 84],
+                    [230, 180, 130, 98],
+                    [271, 213, 151, 119],
+                    [321, 251, 177, 137],
+                    [367, 287, 203, 155],
+                    [425, 331, 241, 177],
+                    [458, 362, 258, 194],
+                    [520, 412, 292, 220],
+                    [586, 450, 322, 250],
+                    [644, 504, 364, 280],
+                    [718, 560, 394, 310],
+                    [792, 624, 442, 338],
+                    [858, 666, 482, 382],
+                    [929, 711, 509, 403],
+                    [1003, 779, 565, 439],
+                    [1091, 857, 611, 461],
+                    [1171, 911, 661, 511],
+                    [1273, 997, 715, 535],
+                    [1367, 1059, 751, 593],
+                    [1465, 1125, 805, 625],
+                    [1528, 1190, 868, 658],
+                    [1628, 1264, 908, 698],
+                    [1732, 1370, 982, 742],
+                    [1840, 1452, 1030, 790],
+                    [1952, 1538, 1112, 842],
+                    [2068, 1628, 1168, 898],
+                    [2188, 1722, 1228, 958],
+                    [2303, 1809, 1283, 983],
+                    [2431, 1911, 1351, 1051],
+                    [2563, 1989, 1423, 1093],
+                    [2699, 2099, 1499, 1139],
+                    [2809, 2213, 1579, 1219],
+                    [2953, 2331, 1663, 1273],
+                ];
+
+                const EC_TABLE = [
+                    null,
+                    [
+                        [7, 1, 19, 0, 0],
+                        [10, 1, 16, 0, 0],
+                        [13, 1, 13, 0, 0],
+                        [17, 1, 9, 0, 0],
+                    ],
+                    [
+                        [10, 1, 34, 0, 0],
+                        [16, 1, 28, 0, 0],
+                        [22, 1, 22, 0, 0],
+                        [28, 1, 16, 0, 0],
+                    ],
+                    [
+                        [15, 1, 55, 0, 0],
+                        [26, 1, 44, 0, 0],
+                        [18, 2, 17, 0, 0],
+                        [22, 2, 13, 0, 0],
+                    ],
+                    [
+                        [20, 1, 80, 0, 0],
+                        [18, 2, 32, 0, 0],
+                        [26, 2, 24, 0, 0],
+                        [16, 4, 9, 0, 0],
+                    ],
+                    [
+                        [26, 1, 108, 0, 0],
+                        [24, 2, 43, 0, 0],
+                        [18, 2, 15, 2, 16],
+                        [22, 2, 11, 2, 12],
+                    ],
+                    [
+                        [18, 2, 68, 0, 0],
+                        [16, 4, 27, 0, 0],
+                        [24, 4, 19, 0, 0],
+                        [28, 4, 15, 0, 0],
+                    ],
+                    [
+                        [20, 2, 78, 0, 0],
+                        [18, 4, 31, 0, 0],
+                        [18, 2, 14, 4, 15],
+                        [26, 4, 13, 1, 14],
+                    ],
+                    [
+                        [24, 2, 97, 0, 0],
+                        [22, 2, 38, 2, 39],
+                        [22, 4, 18, 2, 19],
+                        [26, 4, 14, 2, 15],
+                    ],
+                    [
+                        [30, 2, 116, 0, 0],
+                        [22, 3, 36, 2, 37],
+                        [20, 4, 16, 4, 17],
+                        [24, 4, 12, 4, 13],
+                    ],
+                    [
+                        [18, 2, 68, 2, 69],
+                        [26, 4, 43, 1, 44],
+                        [24, 6, 19, 2, 20],
+                        [28, 6, 15, 2, 16],
+                    ],
+                    [
+                        [20, 4, 81, 0, 0],
+                        [30, 1, 50, 4, 51],
+                        [28, 4, 22, 4, 23],
+                        [24, 3, 12, 8, 13],
+                    ],
+                    [
+                        [24, 2, 92, 2, 93],
+                        [22, 6, 36, 2, 37],
+                        [26, 4, 20, 6, 21],
+                        [28, 7, 14, 4, 15],
+                    ],
+                    [
+                        [26, 4, 107, 0, 0],
+                        [22, 8, 37, 1, 38],
+                        [24, 8, 20, 4, 21],
+                        [22, 12, 11, 4, 12],
+                    ],
+                    [
+                        [30, 3, 115, 1, 116],
+                        [24, 4, 40, 5, 41],
+                        [20, 11, 16, 5, 17],
+                        [24, 11, 12, 5, 13],
+                    ],
+                    [
+                        [22, 5, 87, 1, 88],
+                        [24, 5, 41, 5, 42],
+                        [30, 5, 24, 7, 25],
+                        [24, 11, 12, 7, 13],
+                    ],
+                    [
+                        [24, 5, 98, 1, 99],
+                        [28, 7, 45, 3, 46],
+                        [24, 15, 19, 2, 20],
+                        [30, 3, 15, 13, 16],
+                    ],
+                    [
+                        [28, 1, 107, 5, 108],
+                        [28, 10, 46, 1, 47],
+                        [28, 1, 22, 15, 23],
+                        [28, 2, 14, 17, 15],
+                    ],
+                    [
+                        [30, 5, 120, 1, 121],
+                        [26, 9, 43, 4, 44],
+                        [28, 17, 22, 1, 23],
+                        [28, 2, 14, 19, 15],
+                    ],
+                    [
+                        [28, 3, 113, 4, 114],
+                        [26, 3, 44, 11, 45],
+                        [26, 17, 21, 4, 22],
+                        [26, 9, 13, 16, 14],
+                    ],
+                    [
+                        [28, 3, 107, 5, 108],
+                        [26, 3, 41, 13, 42],
+                        [30, 15, 24, 5, 25],
+                        [28, 15, 15, 10, 16],
+                    ],
+                    [
+                        [28, 4, 116, 4, 117],
+                        [26, 17, 42, 0, 0],
+                        [28, 17, 22, 6, 23],
+                        [30, 19, 16, 6, 17],
+                    ],
+                    [
+                        [28, 2, 111, 7, 112],
+                        [28, 17, 46, 0, 0],
+                        [30, 7, 24, 16, 25],
+                        [24, 34, 13, 0, 0],
+                    ],
+                    [
+                        [30, 4, 121, 5, 122],
+                        [28, 4, 47, 14, 48],
+                        [30, 11, 24, 14, 25],
+                        [30, 16, 15, 14, 16],
+                    ],
+                    [
+                        [30, 6, 117, 4, 118],
+                        [28, 6, 45, 14, 46],
+                        [30, 11, 24, 16, 25],
+                        [30, 30, 16, 2, 17],
+                    ],
+                    [
+                        [26, 8, 106, 4, 107],
+                        [28, 8, 47, 13, 48],
+                        [30, 7, 24, 22, 25],
+                        [30, 22, 15, 13, 16],
+                    ],
+                    [
+                        [28, 10, 114, 2, 115],
+                        [28, 19, 46, 4, 47],
+                        [28, 28, 22, 6, 23],
+                        [30, 33, 16, 4, 17],
+                    ],
+                    [
+                        [30, 8, 122, 4, 123],
+                        [28, 22, 45, 3, 46],
+                        [30, 8, 23, 26, 24],
+                        [30, 12, 15, 28, 16],
+                    ],
+                    [
+                        [30, 3, 117, 10, 118],
+                        [28, 3, 45, 23, 46],
+                        [30, 4, 24, 31, 25],
+                        [30, 11, 15, 31, 16],
+                    ],
+                    [
+                        [30, 7, 116, 7, 117],
+                        [28, 21, 45, 7, 46],
+                        [30, 1, 23, 37, 24],
+                        [30, 19, 15, 26, 16],
+                    ],
+                    [
+                        [30, 5, 115, 10, 116],
+                        [28, 19, 47, 10, 48],
+                        [30, 15, 24, 25, 25],
+                        [30, 23, 15, 25, 16],
+                    ],
+                    [
+                        [30, 13, 115, 3, 116],
+                        [28, 2, 46, 29, 47],
+                        [30, 42, 24, 1, 25],
+                        [30, 23, 15, 28, 16],
+                    ],
+                    [
+                        [30, 17, 115, 0, 0],
+                        [28, 10, 46, 23, 47],
+                        [30, 10, 24, 35, 25],
+                        [30, 19, 15, 35, 16],
+                    ],
+                    [
+                        [30, 17, 115, 1, 116],
+                        [28, 14, 46, 21, 47],
+                        [30, 29, 24, 19, 25],
+                        [30, 11, 15, 46, 16],
+                    ],
+                    [
+                        [30, 13, 115, 6, 116],
+                        [28, 14, 46, 23, 47],
+                        [30, 44, 24, 7, 25],
+                        [30, 59, 16, 1, 17],
+                    ],
+                    [
+                        [30, 12, 121, 7, 122],
+                        [28, 12, 47, 26, 48],
+                        [30, 39, 24, 14, 25],
+                        [30, 22, 15, 41, 16],
+                    ],
+                    [
+                        [30, 6, 121, 14, 122],
+                        [28, 6, 47, 34, 48],
+                        [30, 46, 24, 10, 25],
+                        [30, 2, 15, 64, 16],
+                    ],
+                    [
+                        [30, 17, 122, 4, 123],
+                        [28, 29, 46, 14, 47],
+                        [30, 49, 24, 10, 25],
+                        [30, 24, 15, 46, 16],
+                    ],
+                    [
+                        [30, 4, 122, 18, 123],
+                        [28, 13, 46, 32, 47],
+                        [30, 48, 24, 14, 25],
+                        [30, 42, 15, 32, 16],
+                    ],
+                    [
+                        [30, 20, 117, 4, 118],
+                        [28, 40, 47, 7, 48],
+                        [30, 43, 24, 22, 25],
+                        [30, 10, 15, 67, 16],
+                    ],
+                    [
+                        [30, 19, 118, 6, 119],
+                        [28, 18, 47, 31, 48],
+                        [30, 34, 24, 34, 25],
+                        [30, 20, 15, 61, 16],
+                    ],
+                ];
+
+                const ALIGN_POS = [
+                    null,
+                    [],
+                    [6, 18],
+                    [6, 22],
+                    [6, 26],
+                    [6, 30],
+                    [6, 34],
+                    [6, 22, 38],
+                    [6, 24, 42],
+                    [6, 26, 46],
+                    [6, 28, 50],
+                    [6, 30, 54],
+                    [6, 32, 58],
+                    [6, 34, 62],
+                    [6, 26, 46, 66],
+                    [6, 26, 48, 70],
+                    [6, 26, 50, 74],
+                    [6, 30, 54, 78],
+                    [6, 30, 56, 82],
+                    [6, 30, 58, 86],
+                    [6, 34, 62, 90],
+                    [6, 28, 50, 72, 94],
+                    [6, 26, 50, 74, 98],
+                    [6, 30, 54, 78, 102],
+                    [6, 28, 54, 80, 106],
+                    [6, 32, 58, 84, 110],
+                    [6, 30, 58, 86, 114],
+                    [6, 34, 62, 90, 118],
+                    [6, 26, 50, 74, 98, 122],
+                    [6, 30, 54, 78, 102, 126],
+                    [6, 26, 52, 78, 104, 130],
+                    [6, 30, 56, 82, 108, 134],
+                    [6, 34, 60, 86, 112, 138],
+                    [6, 30, 58, 86, 114, 142],
+                    [6, 34, 62, 90, 118, 146],
+                    [6, 30, 54, 78, 102, 126, 150],
+                    [6, 24, 50, 76, 102, 128, 154],
+                    [6, 28, 54, 80, 106, 132, 158],
+                    [6, 32, 58, 84, 110, 136, 162],
+                    [6, 26, 54, 82, 110, 138, 166],
+                    [6, 30, 58, 86, 114, 142, 170],
+                ];
+
+                const GF_EXP = new Uint8Array(512);
+                const GF_LOG = new Uint8Array(256);
+                (() => {
+                    let x = 1;
+                    for (let i = 0; i < 255; i++) {
+                        GF_EXP[i] = x;
+                        GF_LOG[x] = i;
+                        x = (x << 1) ^ (x >= 128 ? 0x11d : 0);
+                    }
+                    for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i - 255];
+                })();
+
+                function gfMul(a, b) {
+                    if (a === 0 || b === 0) return 0;
+                    return GF_EXP[GF_LOG[a] + GF_LOG[b]];
+                }
+
+                function rsGenPoly(n) {
+                    let poly = [1];
+                    for (let i = 0; i < n; i++) {
+                        const next = new Uint8Array(poly.length + 1);
+                        const factor = GF_EXP[i];
+                        for (let j = 0; j < poly.length; j++) {
+                            next[j] ^= poly[j];
+                            next[j + 1] ^= gfMul(poly[j], factor);
+                        }
+                        poly = next;
+                    }
+                    return poly;
+                }
+
+                function rsEncode(data, ecCount) {
+                    const gen = rsGenPoly(ecCount);
+                    const result = new Uint8Array(data.length + ecCount);
+                    result.set(data);
+                    for (let i = 0; i < data.length; i++) {
+                        const coeff = result[i];
+                        if (coeff !== 0) {
+                            for (let j = 0; j < gen.length; j++) {
+                                result[i + j] ^= gfMul(gen[j], coeff);
+                            }
+                        }
+                    }
+                    return result.slice(data.length);
+                }
+
+                function getVersion(len, ecLevel) {
+                    const ecIdx = EC_LEVELS[ecLevel];
+                    for (let v = 1; v <= 40; v++) {
+                        if (CAPACITY[v][ecIdx] >= len) return v;
+                    }
+                    return -1;
+                }
+
+                function getSize(version) {
+                    return 17 + version * 4;
+                }
+
+                function encodeData(text, version, ecLevel) {
+                    const ecIdx = EC_LEVELS[ecLevel];
+                    const ecInfo = EC_TABLE[version][ecIdx];
+                    const [ecPerBlock, numB1, dataPerB1, numB2, dataPerB2] =
+                        ecInfo;
+                    const totalData = numB1 * dataPerB1 + numB2 * dataPerB2;
+                    const bytes = new TextEncoder().encode(text);
+                    let bits = "";
+                    bits += "0100";
+                    const ccLen = version <= 9 ? 8 : 16;
+                    bits += bytes.length.toString(2).padStart(ccLen, "0");
+                    for (const b of bytes)
+                        bits += b.toString(2).padStart(8, "0");
+                    bits += "0000";
+                    while (bits.length % 8 !== 0) bits += "0";
+                    const dataArr = [];
+                    for (let i = 0; i < bits.length; i += 8) {
+                        dataArr.push(parseInt(bits.substring(i, i + 8), 2));
+                    }
+                    const pads = [0xec, 0x11];
+                    let pi = 0;
+                    while (dataArr.length < totalData) {
+                        dataArr.push(pads[pi]);
+                        pi ^= 1;
+                    }
+                    const blocks = [],
+                        ecBlocks = [];
+                    let offset = 0;
+                    for (let i = 0; i < numB1; i++) {
+                        const block = new Uint8Array(
+                            dataArr.slice(offset, offset + dataPerB1),
+                        );
+                        blocks.push(block);
+                        ecBlocks.push(rsEncode(block, ecPerBlock));
+                        offset += dataPerB1;
+                    }
+                    for (let i = 0; i < numB2; i++) {
+                        const block = new Uint8Array(
+                            dataArr.slice(offset, offset + dataPerB2),
+                        );
+                        blocks.push(block);
+                        ecBlocks.push(rsEncode(block, ecPerBlock));
+                        offset += dataPerB2;
+                    }
+                    const result = [];
+                    const maxDataLen = Math.max(dataPerB1, dataPerB2);
+                    for (let i = 0; i < maxDataLen; i++) {
+                        for (const block of blocks) {
+                            if (i < block.length) result.push(block[i]);
+                        }
+                    }
+                    for (let i = 0; i < ecPerBlock; i++) {
+                        for (const block of ecBlocks) {
+                            if (i < block.length) result.push(block[i]);
+                        }
+                    }
+                    return result;
+                }
+
+                function createMatrix(version) {
+                    const size = getSize(version);
+                    return Array.from(
+                        { length: size },
+                        () => new Int8Array(size),
+                    );
+                }
+
+                function placeFinderPattern(matrix, row, col) {
+                    for (let r = -1; r <= 7; r++) {
+                        for (let c = -1; c <= 7; c++) {
+                            const mr = row + r,
+                                mc = col + c;
+                            if (
+                                mr < 0 ||
+                                mr >= matrix.length ||
+                                mc < 0 ||
+                                mc >= matrix.length
+                            )
+                                continue;
+                            if (
+                                (r >= 0 && r <= 6 && (c === 0 || c === 6)) ||
+                                (c >= 0 && c <= 6 && (r === 0 || r === 6)) ||
+                                (r >= 2 && r <= 4 && c >= 2 && c <= 4)
+                            ) {
+                                matrix[mr][mc] = 1;
+                            } else {
+                                matrix[mr][mc] = -1;
+                            }
+                        }
+                    }
+                }
+
+                function placeAlignmentPattern(matrix, row, col) {
+                    for (let r = -2; r <= 2; r++) {
+                        for (let c = -2; c <= 2; c++) {
+                            if (
+                                Math.abs(r) === 2 ||
+                                Math.abs(c) === 2 ||
+                                (r === 0 && c === 0)
+                            ) {
+                                matrix[row + r][col + c] = 1;
+                            } else {
+                                matrix[row + r][col + c] = -1;
+                            }
+                        }
+                    }
+                }
+
+                function placePatterns(matrix, version) {
+                    const size = matrix.length;
+                    placeFinderPattern(matrix, 0, 0);
+                    placeFinderPattern(matrix, 0, size - 7);
+                    placeFinderPattern(matrix, size - 7, 0);
+                    for (let i = 8; i < size - 8; i++) {
+                        if (matrix[6][i] === 0)
+                            matrix[6][i] = i % 2 === 0 ? 1 : -1;
+                        if (matrix[i][6] === 0)
+                            matrix[i][6] = i % 2 === 0 ? 1 : -1;
+                    }
+                    if (version >= 2) {
+                        const positions = ALIGN_POS[version];
+                        for (const r of positions) {
+                            for (const c of positions) {
+                                if (matrix[r][c] !== 0) continue;
+                                placeAlignmentPattern(matrix, r, c);
+                            }
+                        }
+                    }
+                    matrix[size - 8][8] = 1;
+                    for (let i = 0; i < 8; i++) {
+                        if (matrix[8][i] === 0) matrix[8][i] = -1;
+                        if (matrix[8][size - 1 - i] === 0)
+                            matrix[8][size - 1 - i] = -1;
+                        if (matrix[i][8] === 0) matrix[i][8] = -1;
+                        if (matrix[size - 1 - i][8] === 0)
+                            matrix[size - 1 - i][8] = -1;
+                    }
+                    if (matrix[8][8] === 0) matrix[8][8] = -1;
+                    if (version >= 7) {
+                        for (let i = 0; i < 6; i++) {
+                            for (let j = 0; j < 3; j++) {
+                                if (matrix[i][size - 11 + j] === 0)
+                                    matrix[i][size - 11 + j] = -1;
+                                if (matrix[size - 11 + j][i] === 0)
+                                    matrix[size - 11 + j][i] = -1;
+                            }
+                        }
+                    }
+                }
+
+                function placeData(matrix, data) {
+                    const size = matrix.length;
+                    let bitIdx = 0;
+                    const totalBits = data.length * 8;
+                    let col = size - 1;
+                    let goingUp = true;
+                    while (col >= 0) {
+                        if (col === 6) col--;
+                        const rows = goingUp
+                            ? Array.from(
+                                  { length: size },
+                                  (_, i) => size - 1 - i,
+                              )
+                            : Array.from({ length: size }, (_, i) => i);
+                        for (const row of rows) {
+                            for (let dc = 0; dc <= 1; dc++) {
+                                const c = col - dc;
+                                if (c < 0) continue;
+                                if (matrix[row][c] !== 0) continue;
+                                if (bitIdx < totalBits) {
+                                    const byteIdx = bitIdx >> 3;
+                                    const bitOff = 7 - (bitIdx & 7);
+                                    matrix[row][c] =
+                                        (data[byteIdx] >> bitOff) & 1 ? 1 : -1;
+                                } else {
+                                    matrix[row][c] = -1;
+                                }
+                                bitIdx++;
+                            }
+                        }
+                        col -= 2;
+                        goingUp = !goingUp;
+                    }
+                }
+
+                const MASK_FNS = [
+                    (r, c) => (r + c) % 2 === 0,
+                    (r, c) => r % 2 === 0,
+                    (r, c) => c % 3 === 0,
+                    (r, c) => (r + c) % 3 === 0,
+                    (r, c) => (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0,
+                    (r, c) => ((r * c) % 2) + ((r * c) % 3) === 0,
+                    (r, c) => (((r * c) % 2) + ((r * c) % 3)) % 2 === 0,
+                    (r, c) => (((r + c) % 2) + ((r * c) % 3)) % 2 === 0,
+                ];
+
+                function applyMask(matrix, patternMatrix, maskIdx) {
+                    const size = matrix.length;
+                    const masked = matrix.map((row) => Int8Array.from(row));
+                    const fn = MASK_FNS[maskIdx];
+                    for (let r = 0; r < size; r++) {
+                        for (let c = 0; c < size; c++) {
+                            if (patternMatrix[r][c] !== 0) continue;
+                            if (fn(r, c)) {
+                                masked[r][c] = masked[r][c] === 1 ? -1 : 1;
+                            }
+                        }
+                    }
+                    return masked;
+                }
+
+                const FORMAT_INFO_STRINGS = [
+                    [
+                        0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41,
+                        0x6976,
+                    ],
+                    [
+                        0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97,
+                        0x4aa0,
+                    ],
+                    [
+                        0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda,
+                        0x2bed,
+                    ],
+                    [
+                        0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c,
+                        0x083b,
+                    ],
+                ];
+
+                function placeFormatInfo(matrix, ecLevel, maskIdx) {
+                    const ecIdx = EC_LEVELS[ecLevel];
+                    const info = FORMAT_INFO_STRINGS[ecIdx][maskIdx];
+                    const size = matrix.length;
+                    const bits = [];
+                    for (let i = 14; i >= 0; i--) bits.push((info >> i) & 1);
+                    const p1 = [
+                        [8, 0],
+                        [8, 1],
+                        [8, 2],
+                        [8, 3],
+                        [8, 4],
+                        [8, 5],
+                        [8, 7],
+                        [8, 8],
+                        [7, 8],
+                        [5, 8],
+                        [4, 8],
+                        [3, 8],
+                        [2, 8],
+                        [1, 8],
+                        [0, 8],
+                    ];
+                    for (let i = 0; i < 15; i++) {
+                        const [r, c] = p1[i];
+                        matrix[r][c] = bits[i] ? 1 : -1;
+                    }
+                    const p2 = [
+                        [size - 1, 8],
+                        [size - 2, 8],
+                        [size - 3, 8],
+                        [size - 4, 8],
+                        [size - 5, 8],
+                        [size - 6, 8],
+                        [size - 7, 8],
+                        [8, size - 8],
+                        [8, size - 7],
+                        [8, size - 6],
+                        [8, size - 5],
+                        [8, size - 4],
+                        [8, size - 3],
+                        [8, size - 2],
+                        [8, size - 1],
+                    ];
+                    for (let i = 0; i < 15; i++) {
+                        const [r, c] = p2[i];
+                        matrix[r][c] = bits[i] ? 1 : -1;
+                    }
+                }
+
+                function placeVersionInfo(matrix, version) {
+                    if (version < 7) return;
+                    const size = matrix.length;
+                    const VI = [
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        0x07c94,
+                        0x085bc,
+                        0x09a99,
+                        0x0a4d3,
+                        0x0bbf6,
+                        0x0c762,
+                        0x0d847,
+                        0x0e60d,
+                        0x0f928,
+                        0x10b78,
+                        0x1145d,
+                        0x12a17,
+                        0x13532,
+                        0x149a6,
+                        0x15683,
+                        0x168c9,
+                        0x177ec,
+                        0x18ec4,
+                        0x191e1,
+                        0x1afab,
+                        0x1b08e,
+                        0x1cc1a,
+                        0x1d33f,
+                        0x1ed75,
+                        0x1f250,
+                        0x209d5,
+                        0x216f0,
+                        0x228ba,
+                        0x2379f,
+                        0x24b0b,
+                        0x2542e,
+                        0x26a64,
+                        0x27541,
+                        0x28c69,
+                    ];
+                    const info = VI[version];
+                    if (!info) return;
+                    for (let i = 0; i < 18; i++) {
+                        const bit = (info >> i) & 1;
+                        const r = Math.floor(i / 3);
+                        const c = size - 11 + (i % 3);
+                        matrix[r][c] = bit ? 1 : -1;
+                        matrix[c][r] = bit ? 1 : -1;
+                    }
+                }
+
+                function penalty(matrix) {
+                    const size = matrix.length;
+                    let score = 0;
+                    for (let r = 0; r < size; r++) {
+                        let run = 1;
+                        for (let c = 1; c < size; c++) {
+                            if (matrix[r][c] > 0 === matrix[r][c - 1] > 0) {
+                                run++;
+                                if (run === 5) score += 3;
+                                else if (run > 5) score += 1;
+                            } else run = 1;
+                        }
+                    }
+                    for (let c = 0; c < size; c++) {
+                        let run = 1;
+                        for (let r = 1; r < size; r++) {
+                            if (matrix[r][c] > 0 === matrix[r - 1][c] > 0) {
+                                run++;
+                                if (run === 5) score += 3;
+                                else if (run > 5) score += 1;
+                            } else run = 1;
+                        }
+                    }
+                    for (let r = 0; r < size - 1; r++) {
+                        for (let c = 0; c < size - 1; c++) {
+                            const v = matrix[r][c] > 0;
+                            if (
+                                v === matrix[r][c + 1] > 0 &&
+                                v === matrix[r + 1][c] > 0 &&
+                                v === matrix[r + 1][c + 1] > 0
+                            )
+                                score += 3;
+                        }
+                    }
+                    const pat1 = [1, -1, 1, 1, 1, -1, 1, -1, -1, -1, -1];
+                    const pat2 = [-1, -1, -1, -1, 1, -1, 1, 1, 1, -1, 1];
+                    for (let r = 0; r < size; r++) {
+                        for (let c = 0; c <= size - 11; c++) {
+                            let m1 = true,
+                                m2 = true;
+                            for (let i = 0; i < 11; i++) {
+                                const v = matrix[r][c + i] > 0 ? 1 : -1;
+                                if (v !== pat1[i]) m1 = false;
+                                if (v !== pat2[i]) m2 = false;
+                            }
+                            if (m1 || m2) score += 40;
+                        }
+                    }
+                    for (let c = 0; c < size; c++) {
+                        for (let r = 0; r <= size - 11; r++) {
+                            let m1 = true,
+                                m2 = true;
+                            for (let i = 0; i < 11; i++) {
+                                const v = matrix[r + i][c] > 0 ? 1 : -1;
+                                if (v !== pat1[i]) m1 = false;
+                                if (v !== pat2[i]) m2 = false;
+                            }
+                            if (m1 || m2) score += 40;
+                        }
+                    }
+                    let dark = 0;
+                    for (let r = 0; r < size; r++)
+                        for (let c = 0; c < size; c++)
+                            if (matrix[r][c] > 0) dark++;
+                    const pct = (dark / (size * size)) * 100;
+                    const p5 = Math.floor(pct / 5) * 5;
+                    const n5 = p5 + 5;
+                    score +=
+                        Math.min(Math.abs(p5 - 50) / 5, Math.abs(n5 - 50) / 5) *
+                        10;
+                    return score;
+                }
+
+                function generate(text, ecLevel) {
+                    const bytes = new TextEncoder().encode(text);
+                    const version = getVersion(bytes.length, ecLevel);
+                    if (version < 0) return null;
+                    const data = encodeData(text, version, ecLevel);
+                    const patternMatrix = createMatrix(version);
+                    placePatterns(patternMatrix, version);
+                    let bestScore = Infinity,
+                        bestMatrix = null;
+                    for (let m = 0; m < 8; m++) {
+                        const matrix = createMatrix(version);
+                        placePatterns(matrix, version);
+                        placeData(matrix, data);
+                        const masked = applyMask(matrix, patternMatrix, m);
+                        placeFormatInfo(masked, ecLevel, m);
+                        placeVersionInfo(masked, version);
+                        const s = penalty(masked);
+                        if (s < bestScore) {
+                            bestScore = s;
+                            bestMatrix = masked;
+                        }
+                    }
+                    return {
+                        matrix: bestMatrix,
+                        version,
+                        size: getSize(version),
+                    };
+                }
+
+                return { generate, getVersion, CAPACITY, EC_LEVELS };
+            })();
+
+            // ─── UI ────────────────────────────────────────────────────────
+            const input = document.getElementById("qr-input");
+            const batchInput = document.getElementById("batch-input");
+            const charCount = document.getElementById("char-count");
+            const ecSelect = document.getElementById("ec-level");
+            const modSelect = document.getElementById("mod-size");
+            const fgInput = document.getElementById("fg-color");
+            const bgInput = document.getElementById("bg-color");
+            const fgLabel = document.getElementById("fg-label");
+            const bgLabel = document.getElementById("bg-label");
+            const canvas = document.getElementById("qr-canvas");
+            const placeholder = document.getElementById("qr-placeholder");
+            const wrap = document.getElementById("qr-wrap");
+            const genBtn = document.getElementById("generate-btn");
+            const dlBtn = document.getElementById("download-btn");
+            const errorMsg = document.getElementById("error-msg");
+            const batchResults = document.getElementById("batch-results");
+            const batchCount = document.getElementById("batch-count");
+            const qrGrid = document.getElementById("qr-grid");
+            const singleInputGroup =
+                document.getElementById("single-input-group");
+            const batchInputGroup =
+                document.getElementById("batch-input-group");
+            const singleOutput = document.getElementById("single-output");
+            const modeSingle = document.getElementById("mode-single");
+            const modeBatch = document.getElementById("mode-batch");
+
+            let currentQR = null;
+            let currentMode = "single";
+
+            // Mode toggle
+            modeSingle.addEventListener("click", () => setMode("single"));
+            modeBatch.addEventListener("click", () => setMode("batch"));
+
+            function setMode(mode) {
+                currentMode = mode;
+                modeSingle.classList.toggle("active", mode === "single");
+                modeBatch.classList.toggle("active", mode === "batch");
+                singleInputGroup.classList.toggle("hidden", mode !== "single");
+                batchInputGroup.classList.toggle("hidden", mode !== "batch");
+                singleOutput.classList.toggle("hidden", mode !== "single");
+                dlBtn.classList.toggle("hidden", mode !== "single");
+                if (mode === "single") {
+                    batchResults.classList.remove("show");
+                    genBtn.textContent = "Generate";
+                } else {
+                    genBtn.textContent = "Generate All";
+                }
+                clearError();
+            }
+
+            function updateCharCount() {
+                const bytes = new TextEncoder().encode(input.value);
+                const ecIdx = QR.EC_LEVELS[ecSelect.value];
+                const maxCap = QR.CAPACITY[40][ecIdx];
+                charCount.textContent = `${bytes.length} / ${maxCap.toLocaleString()}`;
+                charCount.className =
+                    "char-count" + (bytes.length > maxCap ? " warn" : "");
+            }
+
+            input.addEventListener("input", updateCharCount);
+            ecSelect.addEventListener("change", updateCharCount);
+
+            fgInput.addEventListener("input", () => {
+                fgLabel.value = fgInput.value.toUpperCase();
+                if (currentQR && currentMode === "single") renderQR();
+            });
+            bgInput.addEventListener("input", () => {
+                bgLabel.value = bgInput.value.toUpperCase();
+                if (currentQR && currentMode === "single") renderQR();
+            });
+
+            function syncColorFromText(textInput, colorInput) {
+                let val = textInput.value.trim();
+                if (!val.startsWith("#")) val = "#" + val;
+                if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                    colorInput.value = val;
+                    textInput.value = val.toUpperCase();
+                    if (currentQR && currentMode === "single") renderQR();
+                }
+            }
+
+            fgLabel.addEventListener("input", () =>
+                syncColorFromText(fgLabel, fgInput),
+            );
+            bgLabel.addEventListener("input", () =>
+                syncColorFromText(bgLabel, bgInput),
+            );
+            fgLabel.addEventListener("blur", () =>
+                syncColorFromText(fgLabel, fgInput),
+            );
+            bgLabel.addEventListener("blur", () =>
+                syncColorFromText(bgLabel, bgInput),
+            );
+
+            function renderToCanvas(
+                targetCanvas,
+                qrResult,
+                modSize,
+                fgColor,
+                bgColor,
+                displayWidth,
+            ) {
+                const { matrix, size } = qrResult;
+                const quiet = 4;
+                const totalSize = (size + quiet * 2) * modSize;
+                targetCanvas.width = totalSize;
+                targetCanvas.height = totalSize;
+                if (displayWidth) {
+                    targetCanvas.style.width = displayWidth + "px";
+                    targetCanvas.style.height = displayWidth + "px";
+                }
+                const ctx = targetCanvas.getContext("2d");
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, totalSize, totalSize);
+                ctx.fillStyle = fgColor;
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (matrix[r][c] > 0) {
+                            ctx.fillRect(
+                                (c + quiet) * modSize,
+                                (r + quiet) * modSize,
+                                modSize,
+                                modSize,
+                            );
+                        }
+                    }
+                }
+            }
+
+            function renderQR() {
+                if (!currentQR) return;
+                const modSize = parseInt(modSelect.value);
+                renderToCanvas(
+                    canvas,
+                    currentQR,
+                    modSize,
+                    fgInput.value,
+                    bgInput.value,
+                    Math.min((currentQR.size + 8) * modSize, 320),
+                );
+                canvas.style.display = "block";
+                placeholder.style.display = "none";
+                wrap.classList.add("has-qr");
+                dlBtn.disabled = false;
+            }
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                errorMsg.classList.add("show");
+            }
+            function clearError() {
+                errorMsg.classList.remove("show");
+            }
+
+            function downloadCanvas(targetCanvas, filename) {
+                const dataUrl = targetCanvas.toDataURL("image/png");
+                const modal = document.getElementById("save-modal");
+                const img = document.getElementById("save-modal-img");
+                const link = document.getElementById("save-modal-link");
+                const fnEl = document.getElementById("save-modal-filename");
+                img.src = dataUrl;
+                img.alt = filename;
+                link.href = dataUrl;
+                link.download = filename;
+                fnEl.textContent = filename;
+                modal.classList.add("show");
+            }
+
+            document
+                .getElementById("save-modal-close")
+                .addEventListener("click", () => {
+                    document
+                        .getElementById("save-modal")
+                        .classList.remove("show");
+                });
+            document
+                .getElementById("save-modal")
+                .addEventListener("click", (e) => {
+                    if (e.target === e.currentTarget)
+                        e.currentTarget.classList.remove("show");
+                });
+
+            function slugify(text) {
+                return text
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "")
+                    .substring(0, 60);
+            }
+
+            function parseBatchInput(text) {
+                const lines = text
+                    .split("\n")
+                    .map((l) => l.trim())
+                    .filter((l) => l.length > 0);
+                if (lines.length === 0) return [];
+
+                // Detect if first line is a header
+                const firstLine = lines[0].toLowerCase();
+                const startIdx =
+                    (firstLine.includes("url") &&
+                        firstLine.includes("title")) ||
+                    (firstLine.includes("url") && firstLine.includes("qr"))
+                        ? 1
+                        : 0;
+
+                const entries = [];
+                for (let i = startIdx; i < lines.length; i++) {
+                    const sep = lines[i].indexOf(";");
+                    if (sep === -1) {
+                        entries.push({ url: lines[i], title: lines[i] });
+                    } else {
+                        const url = lines[i].substring(0, sep).trim();
+                        const title = lines[i].substring(sep + 1).trim() || url;
+                        if (url) entries.push({ url, title });
+                    }
+                }
+                return entries;
+            }
+
+            function generateBatch() {
+                clearError();
+                const entries = parseBatchInput(batchInput.value);
+                if (entries.length === 0) {
+                    showError(
+                        "Paste at least one line of CSV data (URL;Title).",
+                    );
+                    return;
+                }
+
+                const ecLevel = ecSelect.value;
+                const modSize = parseInt(modSelect.value);
+                const fg = fgInput.value;
+                const bg = bgInput.value;
+
+                qrGrid.innerHTML = "";
+                let errorCount = 0;
+
+                for (const entry of entries) {
+                    const result = QR.generate(entry.url, ecLevel);
+                    if (!result) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    const card = document.createElement("div");
+                    card.className = "qr-card";
+
+                    const c = document.createElement("canvas");
+                    c.className = "qr-canvas";
+                    const displaySize = 160;
+                    renderToCanvas(c, result, modSize, fg, bg, displaySize);
+
+                    const titleEl = document.createElement("div");
+                    titleEl.className = "qr-card-title";
+                    titleEl.textContent = entry.title;
+
+                    const urlEl = document.createElement("div");
+                    urlEl.className = "qr-card-url";
+                    urlEl.textContent = entry.url;
+
+                    const dlButton = document.createElement("button");
+                    dlButton.className = "btn-dl";
+                    dlButton.textContent = "Download PNG";
+                    dlButton.addEventListener("click", () => {
+                        downloadCanvas(c, slugify(entry.title) + ".png");
+                    });
+
+                    card.appendChild(c);
+                    card.appendChild(titleEl);
+                    card.appendChild(urlEl);
+                    card.appendChild(dlButton);
+                    qrGrid.appendChild(card);
+                }
+
+                const successCount = entries.length - errorCount;
+                batchCount.textContent =
+                    successCount +
+                    " code" +
+                    (successCount !== 1 ? "s" : "") +
+                    (errorCount > 0 ? ` (${errorCount} failed)` : "");
+                batchResults.classList.add("show");
+
+                if (errorCount > 0) {
+                    showError(
+                        `${errorCount} QR code(s) failed to generate. Input may be too long for the selected error correction level.`,
+                    );
+                }
+            }
+
+            genBtn.addEventListener("click", () => {
+                if (currentMode === "batch") {
+                    generateBatch();
+                    return;
+                }
+
+                clearError();
+                const text = input.value.trim();
+                if (!text) {
+                    showError("Enter some text or a URL to encode.");
+                    return;
+                }
+                const bytes = new TextEncoder().encode(text);
+                const ecIdx = QR.EC_LEVELS[ecSelect.value];
+                const maxCap = QR.CAPACITY[40][ecIdx];
+                if (bytes.length > maxCap) {
+                    showError(
+                        `Input too long (${bytes.length} bytes). Max ${maxCap} bytes at this error correction level.`,
+                    );
+                    return;
+                }
+                const result = QR.generate(text, ecSelect.value);
+                if (!result) {
+                    showError(
+                        "Failed to generate QR code. Try shorter input or lower error correction.",
+                    );
+                    return;
+                }
+                currentQR = result;
+                renderQR();
+            });
+
+            modSelect.addEventListener("change", () => {
+                if (currentQR && currentMode === "single") renderQR();
+            });
+
+            dlBtn.addEventListener("click", () => {
+                if (!currentQR) return;
+                downloadCanvas(
+                    canvas,
+                    slugify(input.value.trim() || "qrcode") + ".png",
+                );
+            });
+
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    genBtn.click();
+                }
+            });
+
+            updateCharCount();
+        </script>
+    </body>
+</html>
