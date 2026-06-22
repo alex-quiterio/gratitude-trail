@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node --env-file=.env --import tsx scripts/migrate.ts",
     "db:seed": "node --env-file=.env --import tsx scripts/seed.ts",
-    "card:new": "node --env-file=.env --import tsx scripts/new-card.ts"
+    "card:new": "node --env-file=.env --import tsx scripts/new-card.ts",
+    "card:bulk": "node --env-file=.env --import tsx scripts/bulk-cards.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
