@@ -8,7 +8,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:migrate": "node --env-file=.env --import tsx scripts/migrate.ts",
-    "db:seed": "psql \"$POSTGRES_URL\" -f db/seed.sql",
+    "db:seed": "node --env-file=.env --import tsx scripts/seed.ts",
     "card:new": "node --env-file=.env --import tsx scripts/new-card.ts"
   },
   "dependencies": {
