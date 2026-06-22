@@ -9,11 +9,29 @@ that card before them — and they can leave their own name, and a note.
 
 The card travels. The list grows. Each scan is a quiet act of presence.
 
+After signing, visitors can opt in to **push notifications** — the next time
+anyone signs that same card, their device gets a native notification. No
+account required, no app to install (except adding to home screen on iOS); the
+browser's Web Push API handles delivery.
+
 ```
   ┌──────────────┐   scan QR    ┌─────────────────────┐   leave a name   ┌──────────────┐
   │ physical card│ ───────────▶ │  /c/<qr_token> page  │ ───────────────▶ │ entries table│
   │  (QR token)  │              │  timeline + sign form│                  │ (append-only)│
   └──────────────┘              └─────────────────────┘                  └──────────────┘
+                                         │                                       │
+                                   opt in│                            new entry  │ triggers
+                                         ▼                                       ▼
+                                ┌──────────────────────┐      ┌─────────────────────────────┐
+                                │  push_subscriptions  │─────▶│  push fan-out (web-push)    │
+                                │   (per-card opt-ins) │ read │  VAPID → browser push relay │
+                                └──────────────────────┘      └─────────────────────────────┘
+                                                                            │
+                                                                            │ native notification
+                                                                            ▼
+                                                              ┌─────────────────────────────┐
+                                                              │   subscribed devices         │
+                                                              └─────────────────────────────┘
 ```
 
 Each token page picks a random warm accent color on every load — amber,
@@ -35,6 +53,22 @@ ordered `entries` for a card *are* the timeline.
 | `title`      | `text` null   | optional label, e.g. *"Morning Fog on Water"*            |
 | `created_at` | `timestamptz` | mint time                                                |
 | `retired_at` | `timestamptz` | soft-stop: scans rejected, history preserved             |
+
+### `push_subscriptions` — Web Push opt-ins
+
+| column       | type          | notes                                                    |
+|--------------|---------------|----------------------------------------------------------|
+| `id`         | `serial` PK   |                                                          |
+| `card_id`    | `uuid` FK     | → `cards.id`, `on delete cascade`                        |
+| `endpoint`   | `text` unique | browser-issued push URL                                  |
+| `p256dh`     | `text`        | browser public key for payload encryption                |
+| `auth`       | `text`        | auth secret for payload encryption                       |
+| `created_at` | `timestamptz` |                                                          |
+| `updated_at` | `timestamptz` | stamped on upsert when a subscription is refreshed       |
+
+One row per browser instance that opted in on a specific card. Dead
+subscriptions (410 / 404 from the push relay) are pruned automatically on the
+next fan-out.
 
 ### `entries` — the timeline of holders
 
@@ -77,6 +111,14 @@ awkward questions ("is *alex* on card A the same person as *alex* on card B?").
 Storing the name on the entry sidesteps that entirely. See *Not here yet* for
 the upgrade path.
 
+**Push notifications via Web Push + VAPID, no third-party service.**
+The server sends notifications directly to the browser's push relay (Google's
+for Chrome, Mozilla's for Firefox) using the standard Web Push protocol.
+VAPID keys identify the server — generate once and store as env vars. No
+Firebase, no external account. Dead subscriptions are pruned on the next
+fan-out. On iOS, the app must be installed to the home screen (PWA) first;
+the `manifest.json` enables this for iOS 16.4+.
+
 **Postgres over Firestore.**
 The core operation is an *ordered, relational* read. Postgres wins here: CHECK
 constraints enforce data quality at the storage layer, the timeline is a plain
@@ -102,23 +144,37 @@ reason about long-term.
 
 ## Stack
 
-Next.js 14 (App Router) · `@vercel/postgres` · Playfair Display + Lora via
-`next/font/google`. Deploys to Vercel; runs locally against any Postgres.
+Next.js 14 (App Router) · `@vercel/postgres` · `web-push` · Playfair Display +
+Lora via `next/font/google`. Deploys to Vercel; runs locally against any
+Postgres.
 
 ```
 db/
-  schema.sql                    canonical schema (source of truth)
-  migrations/0001_init.sql      ordered, runnable migration
-  seed.sql                      demo card + sample timeline
+  migrations/0001_init.sql               cards + entries tables
+  migrations/0003_push_subscriptions.sql push opt-in table
+  migrations/0004_push_subscriptions_updated_at.sql
 
 src/
-  lib/db.ts                     @vercel/postgres client + row types
-  lib/cards.ts                  data access: resolve token, read timeline, append, mint
-  app/layout.tsx                fonts + global styles
+  lib/db.ts                     postgres client + row types
+  lib/cards.ts                  data access: resolve token, timeline, append, mint
+  lib/push.ts                   VAPID setup, save/remove subscription, fan-out sender
+  app/layout.tsx                fonts, manifest, SW registration
+  app/sw-register.tsx           client component — registers public/sw.js
   app/globals.css               animations, hover states, CSS variable theming
-  app/c/[token]/page.tsx        scan landing — random accent + timeline
-  app/c/[token]/sign-form.tsx   client form component
-  app/api/cards/[token]/entries/route.ts   GET timeline / POST entry
+  app/page.tsx                  home — rotating quote + signed-cards history
+  app/signed-cards.tsx          client component — localStorage → card list
+  app/c/[token]/page.tsx        scan landing — accent + live timeline
+  app/c/[token]/entries-context.tsx  shared polling context (count + list)
+  app/c/[token]/sign-form.tsx   sign form + subscribe button
+  app/c/[token]/live-entries.tsx     animated live entry list
+  app/c/[token]/live-count.tsx       live soul count in header
+  app/api/cards/[token]/entries/route.ts   GET timeline / POST entry + push fan-out
+  app/api/cards/[token]/subscribe/route.ts POST subscribe / DELETE unsubscribe
+
+public/
+  sw.js                         service worker — push handler + notification click
+  manifest.json                 PWA manifest (required for iOS push support)
+  icon.png                      app icon (notifications + favicon + home screen)
 
 scripts/new-card.ts             mint a card and print its QR URL
 ```
@@ -134,6 +190,20 @@ createdb gratitude          # or any Postgres instance you control
 pnpm db:migrate
 pnpm db:seed                # optional — loads a demo card + sample timeline
 pnpm dev                    # → http://localhost:3000/c/demo-card-001
+```
+
+**Generate VAPID keys** (one-time — commit the public key, keep the private key secret):
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Add to `.env`:
+
+```env
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<public key>
+VAPID_PRIVATE_KEY=<private key>
+VAPID_SUBJECT=mailto:you@example.com
 ```
 
 Mint a new card:

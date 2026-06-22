@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "psql \"$POSTGRES_URL\" -f db/migrations/0001_init.sql",
+    "db:migrate": "node --env-file=.env --import tsx scripts/migrate.ts",
     "db:seed": "psql \"$POSTGRES_URL\" -f db/seed.sql",
-    "card:new": "tsx scripts/new-card.ts"
+    "card:new": "node --env-file=.env --import tsx scripts/new-card.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
