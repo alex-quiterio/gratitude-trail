@@ -7,35 +7,42 @@ A small experiment in physical gratitude. A printed card carries a QR code.
 When someone scans it, they land on a page that shows every person who has held
 that card before them — and they can leave their own name, and a note.
 
-The card travels. The list grows. Each scan is a quiet act of presence.
+> Each token page picks a random warm accent color on every load — amber,
+terracotta, sage, teal, mauve — so no two visits feel quite the same.
+
+
+## Print these on the card's reverse side
+
+<img width="1536" height="1024" alt="gratitude-instructions" src="https://github.com/user-attachments/assets/7e2bc5d0-93e1-4c16-9480-0416cd876665" />
+
+
+> The card travels. The list grows. Each scan is a quiet act of presence.
+
+## Optional web push notifications
 
 After signing, visitors can opt in to **push notifications** — the next time
 anyone signs that same card, their device gets a native notification. No
 account required, no app to install (except adding to home screen on iOS); the
 browser's Web Push API handles delivery.
 
-```
-  ┌──────────────┐   scan QR    ┌─────────────────────┐   leave a name   ┌──────────────┐
-  │ physical card│ ───────────▶ │  /c/<qr_token> page  │ ───────────────▶ │ entries table│
-  │  (QR token)  │              │  timeline + sign form│                  │ (append-only)│
-  └──────────────┘              └─────────────────────┘                  └──────────────┘
-                                         │                                       │
-                                   opt in│                            new entry  │ triggers
-                                         ▼                                       ▼
-                                ┌──────────────────────┐      ┌─────────────────────────────┐
-                                │  push_subscriptions  │─────▶│  push fan-out (web-push)    │
-                                │   (per-card opt-ins) │ read │  VAPID → browser push relay │
-                                └──────────────────────┘      └─────────────────────────────┘
-                                                                            │
-                                                                            │ native notification
-                                                                            ▼
-                                                              ┌─────────────────────────────┐
-                                                              │   subscribed devices         │
-                                                              └─────────────────────────────┘
-```
+## 
 
-Each token page picks a random warm accent color on every load — amber,
-terracotta, sage, teal, mauve — so no two visits feel quite the same.
+```mermaid
+  graph TD
+    card["physical card<br/>(QR token)"]
+    page["/c/&lt;qr_token&gt; page<br/>timeline + sign form"]
+    entries["entries table<br/>(append-only)"]
+    subs["push_subscriptions<br/>(per-card opt-ins)"]
+    fanout["push fan-out (web-push)<br/>VAPID → browser push relay"]
+    devices["subscribed devices"]
+
+    card -->|scan QR| page
+    page -->|leave a name| entries
+    page -->|opt in| subs
+    entries -->|new entry triggers| fanout
+    subs -->|read| fanout
+    fanout -->|native notification| devices
+```
 
 ---
 
