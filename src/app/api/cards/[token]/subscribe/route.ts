@@ -5,9 +5,10 @@ import { saveSubscription, removeSubscription } from "@/lib/push";
 // POST /api/cards/:token/subscribe  { subscription: PushSubscriptionJSON }
 export async function POST(
   req: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
-  const card = await getActiveCardByToken(params.token);
+  const { token } = await params;
+  const card = await getActiveCardByToken(token);
   if (!card) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   let body: { subscription?: unknown };
@@ -39,7 +40,7 @@ export async function POST(
 // DELETE /api/cards/:token/subscribe  { endpoint: string }
 export async function DELETE(
   req: NextRequest,
-  { params: _ }: { params: { token: string } },
+  { params: _ }: { params: Promise<{ token: string }> },
 ) {
   let body: { endpoint?: unknown };
   try {

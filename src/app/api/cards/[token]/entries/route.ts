@@ -5,13 +5,14 @@ import { notifyCardSubscribers } from "@/lib/push";
 // GET /api/cards/:token/entries → the timeline for this card.
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
-  console.log(`[entries:GET] token=${params.token}`);
+  const { token } = await params;
+  console.log(`[entries:GET] token=${token}`);
 
-  const card = await getActiveCardByToken(params.token);
+  const card = await getActiveCardByToken(token);
   if (!card) {
-    console.warn(`[entries:GET] card not found token=${params.token}`);
+    console.warn(`[entries:GET] card not found token=${token}`);
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
@@ -23,13 +24,14 @@ export async function GET(
 // POST /api/cards/:token/entries  { username, message? } → append a holder.
 export async function POST(
   req: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
-  console.log(`[entries:POST] token=${params.token}`);
+  const { token } = await params;
+  console.log(`[entries:POST] token=${token}`);
 
-  const card = await getActiveCardByToken(params.token);
+  const card = await getActiveCardByToken(token);
   if (!card) {
-    console.warn(`[entries:POST] card not found token=${params.token}`);
+    console.warn(`[entries:POST] card not found token=${token}`);
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
@@ -63,7 +65,7 @@ export async function POST(
   notifyCardSubscribers(card.id, {
     title: card.title ?? "Gratitude Token",
     body: `${username} just passed it forward ✦`,
-    token: params.token,
+    token,
   }).then(() => {
     console.log(`[entries:POST] push notifications sent card=${card.id}`);
   }).catch((err) => {

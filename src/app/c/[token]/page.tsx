@@ -18,9 +18,10 @@ const ACCENTS = [
 export default async function CardPage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
-  const card = await getActiveCardByToken(params.token);
+  const { token } = await params;
+  const card = await getActiveCardByToken(token);
   if (!card) notFound();
 
   const entries = await getTimeline(card.id);
