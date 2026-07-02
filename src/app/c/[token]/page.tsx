@@ -3,6 +3,7 @@ import { getActiveCardByToken, getTimeline } from "@/lib/cards";
 import { SignForm } from "./sign-form";
 import { LiveEntries } from "./live-entries";
 import { LiveCount } from "./live-count";
+import { Journey } from "./journey";
 import { EntriesProvider } from "./entries-context";
 
 const ACCENTS = [
@@ -130,6 +131,8 @@ export default async function CardPage({
         </header>
 
         <SignForm token={card.qr_token} accent={accent.primary} accentDark={accent.dark} />
+
+        <Journey accent={accent} />
 
         <LiveEntries accent={accent} />
       </main>
